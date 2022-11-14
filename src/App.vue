@@ -6,12 +6,12 @@
 </script>
 
 <template>
-  <NavigatorTop></NavigatorTop>
-  <router-view/>
+   <div class="bg-gray-800">
+     <NavigatorTop></NavigatorTop>
+     <router-view/>
+   </div>
 </template>
 
 <style scoped>
-#app{
-  background-color: red;
-}
+
 </style>

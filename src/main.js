@@ -3,6 +3,7 @@ import App from './App.vue'
 import '/src/css/index.css'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+import '/src/css/dark/css-vars.css'
 import NavigatorTop from "./components/NavigatorTop.vue";
 import router from "./router/router";
 
