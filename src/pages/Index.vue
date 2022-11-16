@@ -3,18 +3,18 @@
     <div class="flex w-2/5 mt-20 mb-8 container mx-auto justify-between ">
       <div class="flex">
         <div class="text-7xl font-bold text-white">
-          13
+          {{ this.currentDay}}
         </div>
         <div>
-          <div class="text-3xl font-medium text-white">Nov</div>
+          <div class="text-3xl font-medium text-white">{{ this.currentMonth }}</div>
           <div class="text-3xl text-gray-300">
-              2022
+            {{ this.currentYear }}
           </div>
         </div>
       </div>
       <div class="text-3xl text-gray-300 text-center">
         <div class="mt-5">
-          Sunday
+          {{ this.currentWeek}}
         </div>
       </div>
     </div>
@@ -27,10 +27,39 @@
     </div>
     <div class="demo-progress; w-2/5 container mx-auto mt-10">
       <el-progress
+          v-if="this.successStatus"
+          :show-text="true"
           :text-inside="true"
           :stroke-width="30"
-          :percentage="80"
+          :percentage="this.percent"
           status="success"
+          :format="this.progressContent"
+      />
+      <el-progress
+          v-if="this.exceptionStatus"
+          :show-text="true"
+          :text-inside="true"
+          :stroke-width="30"
+          :percentage="this.percent"
+          status="exception"
+          :format="this.progressContent"
+      />
+      <el-progress
+          v-if="this.warningStatus"
+          :show-text="true"
+          :text-inside="true"
+          :stroke-width="30"
+          :percentage="this.percent"
+          status="warning"
+          :format="this.progressContent"
+      />
+      <el-progress
+          v-if="this.nullStatus"
+          :show-text="true"
+          :text-inside="true"
+          :stroke-width="30"
+          :percentage="0"
+          status="warning"
       />
     </div>
     <div class="h-16 mt-5 ">
@@ -46,10 +75,10 @@
         :before-close="handleClose"
     >
       <el-form :model="form" label-width="120px">
-        <el-form-item label="Activity name">
+        <el-form-item label="任务名称">
           <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item label="Activity time">
+        <el-form-item label="任务时间线">
           <el-col :span="11">
             <el-date-picker
                 v-model="form.startTime"
@@ -82,15 +111,16 @@
       </span>
       </template>
     </el-dialog>
-    <item v-for="task in doingTask" :key="doingTask[task]" :task-content="task"></item>
+    <div class="w-2/5 container mx-auto">
+      <item v-for="task in doingTask" :key="task.taskId" :task-content="task.name" :task-id="task.taskId"></item>
+    </div>
     <div class="demo-collapse">
       <el-collapse>
         <el-collapse-item title="已完成" name="1">
-          <c-item v-for="task in doingTask" :key="doingTask[task]" :task-content="task"></c-item>
+          <c-item v-for="task in completedTask" :key="task.taskId" :task-content="task.name" :task-id="task.taskId"></c-item>
         </el-collapse-item>
       </el-collapse>
     </div>
-    <div>66</div>
   </div>
 </template>
 
@@ -100,7 +130,14 @@ import item from "../components/unCompletedItem.vue";
 import cItem from "../components/CompletedItem.vue"
 import {ElMessageBox} from "element-plus";
 import service from "../utils/axios.js";
+import transformMonth from "../utils/month-transform";
+import transformDay from "../utils/day-transform";
 export default {
+  provide() {
+    return {
+      refresh: this.refreshTask
+    }
+  },
   components: {
     item,
     cItem
@@ -108,7 +145,9 @@ export default {
   name: "index",
   data() {
     return {
-      doingTask: ["为爱冲锋","为爱冲锋","为爱冲锋"],
+      doingTaskTest: ["为爱冲锋","为爱冲锋","为爱冲锋"],
+      doingTask: [],
+      completedTask: [],
       value2: '',
       currentDate: null,
       currentYear: '',
@@ -116,6 +155,11 @@ export default {
       currentDay: '',
       currentWeek: '',
       dialogVisible: false,
+      percent: Number,
+      successStatus: false,
+      exceptionStatus: false,
+      warningStatus: false,
+      nullStatus: false,
       form: {
         taskId: '',
         name: '',
@@ -127,84 +171,24 @@ export default {
   },
   watch: {
     currentDate() {
-      console.log('------------------------------------------------------');
+      console.log('--------------------------------------------------');
       console.log('当前日期' + this.currentDate);
       let date = new Date(this.currentDate);
       console.log('年份'+date.getFullYear());
       console.log('月份'+date.getMonth());
       console.log('星期'+date.getDay());
       console.log('日期'+date.getDate());
-      this.currentMonth = date.getMonth();
+      this.currentYear = date.getFullYear();
       this.currentDay = date.getDate() < 10 ? '0' + (date.getDate()) : date.getDate();
-      switch (date.getDay()){
-        case 0:
-          this.currentWeek = "Sunday";
-          break;
-        case 1:
-          this.currentWeek = "Monday";
-          break;
-        case 2:
-          this.currentWeek = "TuesDay";
-          break;
-        case 3:
-          this.currentWeek = "Wednesday";
-          break;
-        case 4:
-          this.currentWeek = "Thursday";
-          break;
-        case 5:
-          this.currentWeek = "Friday";
-          break;
-        case 6:
-          this.currentWeek = "Saturday";
-          break;
-      }
-      switch (date.getMonth()) {
-        case 0:
-          this.currentMonth = "Jan";
-          break;
-        case 1:
-          this.currentMonth = "Feb";
-          break;
-        case 2:
-          this.currentMonth = "Mar";
-          break;
-        case 3:
-          this.currentMonth = "Apr";
-          break;
-        case 4:
-          this.currentMonth = "May";
-          break;
-        case 5:
-          this.currentMonth = "Jun";
-          break;
-        case 6:
-          this.currentMonth = "Jul";
-          break;
-        case 7:
-          this.currentMonth = "Aug";
-          break;
-        case 8:
-          this.currentMonth = "Sep";
-          break;
-        case 9:
-          this.currentMonth = "Oct";
-          break;
-        case 10:
-          this.currentMonth = "Nov";
-          break;
-        case 11:
-          this.currentMonth = "Dec";
-          break;
-      }
-      console.log("------------------------------------------------")
+      this.currentWeek = transformDay(date.getDay());
+      this.currentMonth = transformMonth(date.getMonth());
+      this.currentDate = this.currentYear + '-' + (date.getMonth() + 1) + '-' + this.currentDay;
+      console.log("------------------------------------------------");
+      this.refreshTask(this.currentDate);
     }
   },
   methods: {
-      format : (percentage) => (percentage === 100 ? 'Full' : `${percentage}%`),
-    getDate() {
-      console.log(this.value2)
-    },
+    format : (percentage) => (percentage === 100 ? 'Full' : `${percentage}%`),
     handleClose( ) {
       ElMessageBox.confirm('您确定取消添加任务吗？')
           .then(() => {
@@ -221,16 +205,80 @@ export default {
       console.log(this.form.endTime);
       service.post('/task/insertTask', this.form)
           .then( res => {
+            this.refreshTask();
             console.log(res.data)
           })
-     }
+     },
+    refreshTask() {
+      service.get('/task/findTaskByDate/' + this.currentDate)
+          .then(res => {
+            console.log("获取当天任务成功");
+            console.log( res.data);
+            let allTask = res.data.data;
+            this.doingTask = [];
+            this.completedTask = [];
+            let completedNum = 0;
+            for (let i = 0;i < allTask.length;i++){
+              if (allTask[i].status === true) {
+                completedNum++;
+                this.completedTask.push(allTask[i])
+              } else {
+                this.doingTask.push(allTask[i]);
+              }
+            }
+            console.log("任务数量" + allTask.length)
+            if (allTask.length === 0) {
+              this.nullStatus = true;
+              this.exceptionStatus = false;
+              this.successStatus = false;
+              this.warningStatus = false;
+            } else {
+              this.percent = (completedNum / allTask.length) * 100;
+              if (this.percent < 20) {
+                this.exceptionStatus = true;
+                this.successStatus = false;
+                this.warningStatus = false;
+                this.nullStatus = false;
+              } else if (this.percent >= 20 && this.percent < 80) {
+                this.warningStatus = true;
+                this.exceptionStatus = false;
+                this.successStatus = false;
+                this.nullStatus = false;
+              } else {
+                this.successStatus = true;
+                this.exceptionStatus = false;
+                this.warningStatus = false;
+                this.nullStatus = false;
+              }
+            }
+            console.log("以完成的任务：");
+            console.log(this.completedTask);
+            console.log("未完成的任务：");
+            console.log(this.doingTask);
+          })
+    },
+    progressContent() {
+      if (this.successStatus) {
+        return "胜利在望！"
+      } else if (this.warningStatus) {
+        return "继续加油！"
+      } else {
+        return "继续努力！"
+      }
+    }
   },
   created() {
+    let date = new Date();
+    this.currentYear = date.getFullYear();
+    this.currentMonth = transformMonth(date.getMonth());
+    this.currentWeek = transformDay(date.getDay());
+    this.currentDay = date.getDate() < 10 ? '0' + (date.getDate()) : date.getDate();
+    this.currentDate = this.currentYear + '-' + (date.getMonth() + 1) + '-' + this.currentDay;
     service.get('/test/hello')
         .then(res => {
           console.log(res.data)
+          console.log("后端连接成功！-------------------------")
         })
-    console.log(123);
   }
 }
 
@@ -253,6 +301,15 @@ export default {
 }
 :deep(.el-collapse-item__wrap) {
   background-color: rgb(31,41,55);
+}
+:deep(.el-dialog){
+  background-color: rgb(31,41,55);
+}
+:deep(.el-dialog__title) {
+  color: white;
+}
+:deep(.el-form-item__label) {
+  color: white;
 }
 </style>
 
